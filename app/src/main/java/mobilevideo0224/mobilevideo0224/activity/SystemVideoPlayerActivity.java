@@ -115,6 +115,18 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             case R.id.btn_pre:
                 break;
             case R.id.btn_start_pause:
+                if(vv.isPlaying()) {
+                    //暂停
+                    vv.pause();
+                    //按钮状态--播放
+                    btnStartPause.setBackgroundResource(R.drawable.btn_start_selector);
+                }else{
+                    //播放
+                    vv.start();
+                    //按钮状态--暂停
+                    btnStartPause.setBackgroundResource(R.drawable.btn_pause_selector);
+                }
+
                 break;
             case R.id.btn_next:
                 break;
