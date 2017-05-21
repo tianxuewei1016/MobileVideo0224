@@ -10,6 +10,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.support.v7.app.AppCompatActivity;
+import android.util.DisplayMetrics;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
@@ -20,7 +21,6 @@ import android.widget.RelativeLayout;
 import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
-import android.widget.VideoView;
 
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -32,6 +32,7 @@ import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.R;
 import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 import mobilevideo0224.mobilevideo0224.utils.Utils;
+import mobilevideo0224.mobilevideo0224.view.VideoView;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity {
 
@@ -43,6 +44,28 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      * 隐藏控制面板
      */
     private static final int HIDE_MEDIACONTROLLER = 1;
+    /**
+     * 默认视频画面
+     */
+    private static final int DEFUALT_SCREEN = 0;
+    /**
+     * 全屏视频画面
+     */
+    private static final int FULL_SCREEN = 1;
+    /**
+     * 是否全屏
+     */
+    private boolean isFullScreen = false;
+    /**
+     * 屏幕的高
+     */
+    private int screenHeight;
+    private int screenWidth;
+    /**
+     * 视频的原声的宽和高
+     */
+    private int videoWidth;
+    private int videoHeight;
 
     @InjectView(R.id.vv)
     VideoView vv;
@@ -239,7 +262,14 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
              */
             @Override
             public boolean onDoubleTap(MotionEvent e) {
-                Toast.makeText(SystemVideoPlayerActivity.this, "双击了", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(SystemVideoPlayerActivity.this, "双击了", Toast.LENGTH_SHORT).show();
+                if(isFullScreen) {
+                    //默认
+                    setVideoType(DEFUALT_SCREEN);
+                }else{
+                    //全屏
+                    setVideoType(FULL_SCREEN);
+                }
                 return super.onDoubleTap(e);
             }
 
@@ -250,16 +280,22 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
              */
             @Override
             public boolean onSingleTapConfirmed(MotionEvent e) {
-                if(isShowMediaController) {
+                if (isShowMediaController) {
                     hideMediaController();
                     handler.removeMessages(HIDE_MEDIACONTROLLER);
-                }else{
+                } else {
                     showMediaController();
-                    handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+                    handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
                 }
                 return super.onSingleTapConfirmed(e);
             }
         });
+
+        //得到屏幕的宽和高
+        DisplayMetrics metrics = new DisplayMetrics();
+        getWindowManager().getDefaultDisplay().getMetrics(metrics);
+        screenHeight = metrics.heightPixels;
+        screenWidth = metrics.widthPixels;
     }
 
     /**
@@ -279,18 +315,18 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     /**
      * 是否显示控制面板
      */
-    private  boolean isShowMediaController = false;
+    private boolean isShowMediaController = false;
 
     /**
      * 隐藏控制面板
      */
-    private void hideMediaController(){
+    private void hideMediaController() {
         llBottom.setVisibility(View.INVISIBLE);
         llTop.setVisibility(View.GONE);
         isShowMediaController = false;
     }
 
-    private void showMediaController(){
+    private void showMediaController() {
         llBottom.setVisibility(View.VISIBLE);
         llTop.setVisibility(View.VISIBLE);
         isShowMediaController = true;
@@ -336,6 +372,8 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             //底层准备播放完成的时候回调
             @Override
             public void onPrepared(MediaPlayer mp) {
+                videoWidth = mp.getVideoWidth();
+                videoHeight = mp.getVideoHeight();
                 //得到视频的总时间=长
                 int duration = vv.getDuration();
                 seekbarVideo.setMax(duration);
@@ -350,6 +388,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
                 //默认隐藏
                 hideMediaController();
+
+                //设置默认屏幕
+                setVideoType(DEFUALT_SCREEN);
             }
         });
 
@@ -399,7 +440,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             @Override
             public void onStopTrackingTouch(SeekBar seekBar) {
 
-                handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+                handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
 
             }
         });
@@ -447,6 +488,13 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             case R.id.btn_voice:
                 break;
             case R.id.btn_swiche_player:
+                if (isFullScreen) {
+                    //默认
+                    setVideoType(DEFUALT_SCREEN);
+                } else {
+                    //全屏
+                    setVideoType(FULL_SCREEN);
+                }
                 break;
             case R.id.btn_exit:
                 finish();
@@ -466,6 +514,40 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         }
         handler.removeMessages(HIDE_MEDIACONTROLLER);
         handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+    }
+
+    private void setVideoType(int videoType) {
+        switch (videoType) {
+            case FULL_SCREEN:
+                isFullScreen = true;
+                //按钮的状态--默认
+                //把按钮设置-默认
+                btnSwichScreen.setBackgroundResource(R.drawable.btn_screen_default_selector);
+                //设置视频画面为全屏显示
+                vv.setVideoSize(screenWidth, screenHeight);
+                break;
+            case DEFUALT_SCREEN:
+                isFullScreen = false;
+                //按钮的状态--全屏
+                btnSwichScreen.setBackgroundResource(R.drawable.btn_screen_full_selector);
+
+                //视频原声的宽和高
+                int mVideoWidth = videoWidth;
+                int mVideoHeight = videoHeight;
+
+                //计算好的要显示的视频的宽和高
+                int width = screenWidth;
+                int height = screenHeight;
+
+                if (mVideoWidth * height < width * mVideoHeight) {
+                    width = height * mVideoWidth / mVideoHeight;
+                } else if (mVideoWidth * height > width * mVideoHeight) {
+                    height = width * mVideoHeight / mVideoWidth;
+                }
+
+                vv.setVideoSize(width, height);
+                break;
+        }
     }
 
     private void setStartOrPause() {
