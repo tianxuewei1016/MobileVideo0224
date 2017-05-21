@@ -1,5 +1,9 @@
 package mobilevideo0224.mobilevideo0224.activity;
 
+import android.content.BroadcastReceiver;
+import android.content.Context;
+import android.content.Intent;
+import android.content.IntentFilter;
 import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.Bundle;
@@ -15,6 +19,9 @@ import android.widget.SeekBar;
 import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.VideoView;
+
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
@@ -67,6 +74,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     RelativeLayout activitySystemVideoPlayer;
 
     private Utils utils;
+    private MyBroadCastReceiver receiver;
 
     private Uri uri;
 
@@ -84,6 +92,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                     //设置文本的播放速度
                     tvCurrenttime.setText(utils.stringForTime(currentPosition));
 
+                    //得到系统的时间
+                    tvSystetime.setText(getSystemTime());
+
                     //循环发消息
                     sendEmptyMessageDelayed(PROGRESS,1000);
                     break;
@@ -92,6 +103,15 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         }
     };
 
+    /**
+     * 得到系统的时间
+     * @return
+     */
+    private String getSystemTime() {
+        SimpleDateFormat format = new SimpleDateFormat("HH:mm:ss");
+        return format.format(new Date());
+    }
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -99,7 +119,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         ButterKnife.inject(this);
         vv = (VideoView) findViewById(R.id.vv);
 
-        utils = new Utils();
+        initData();
         //得到播放地址
         uri = getIntent().getData();
         setListener();
@@ -110,6 +130,51 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
         //设置控制面板
         //vv.setMediaController(new MediaController(this));
+    }
+
+    private void initData() {
+        utils = new Utils();
+
+        //注册监听点亮变化的广播
+        receiver = new MyBroadCastReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        //监听点亮变化
+        intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
+        registerReceiver(receiver,intentFilter);
+
+    }
+
+    class MyBroadCastReceiver extends BroadcastReceiver{
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            int level = intent.getIntExtra("level", 0);//主线程
+            setBatteryView(level);
+        }
+    }
+
+    /**
+     * 设置点亮的量化,对应的都是点亮的图片
+     * @param level
+     */
+    private void setBatteryView(int level) {
+        if (level <= 0) {
+            ivBattery.setImageResource(R.drawable.ic_battery_0);
+        } else if (level <= 10) {
+            ivBattery.setImageResource(R.drawable.ic_battery_10);
+        } else if (level <= 20) {
+            ivBattery.setImageResource(R.drawable.ic_battery_20);
+        } else if (level <= 40) {
+            ivBattery.setImageResource(R.drawable.ic_battery_40);
+        } else if (level <= 60) {
+            ivBattery.setImageResource(R.drawable.ic_battery_60);
+        } else if (level <= 80) {
+            ivBattery.setImageResource(R.drawable.ic_battery_80);
+        } else if (level <= 100) {
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        } else {
+            ivBattery.setImageResource(R.drawable.ic_battery_100);
+        }
     }
 
     private void setListener() {
@@ -214,8 +279,17 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
+        if(handler != null) {
+            //把所有消息移除
+            handler.removeCallbacksAndMessages(null);
+            handler = null;
+        }
+
+        //取消注册
+        if(receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
         super.onDestroy();
-        //把消息移除
-        handler.removeCallbacksAndMessages(null);
     }
 }
