@@ -150,6 +150,42 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             vv.setVideoURI(uri);
         }
 
+        setButtonStatus();
+
+    }
+
+    private void setButtonStatus() {
+        if(mediaItems != null&&mediaItems.size()>0) {
+            //有视频播放
+            setEnable(true);
+            
+            if(position == 0) {
+                btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+                btnPre.setEnabled(false);
+            }
+            
+            if(position == mediaItems.size()-1) {
+                btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+                btnNext.setEnabled(false);
+            }
+        }else if(uri != null) {
+            //上一个和下一个不可用点击
+            setEnable(false);
+        }
+    }
+
+    private void setEnable(boolean b) {
+        if(b) {
+            //上一个和下一个都可以点击
+            btnPre.setBackgroundResource(R.drawable.btn_pre_selector);
+            btnNext.setBackgroundResource(R.drawable.btn_next_selector);
+        }else {
+            //上一个和下一个灰色，并且不可用点击
+            btnPre.setBackgroundResource(R.drawable.btn_pre_gray);
+            btnNext.setBackgroundResource(R.drawable.btn_next_gray);
+        }
+        btnPre.setEnabled(b);
+        btnNext.setEnabled(b);
     }
 
     private void getData() {
@@ -238,8 +274,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             //如果是列表就播放下一个,如果是最后一个就退出当前页面
             @Override
             public void onCompletion(MediaPlayer mp) {
-                Toast.makeText(SystemVideoPlayerActivity.this, "视频播放完成", Toast.LENGTH_SHORT).show();
-                finish();
+                //Toast.makeText(SystemVideoPlayerActivity.this, "视频播放完成", Toast.LENGTH_SHORT).show();
+                //finish();
+                setNextVideo();
             }
         });
 
@@ -274,6 +311,42 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         });
     }
 
+    private void setPreVideo(){
+        if(mediaItems!=null&&mediaItems.size()>0) {
+            position--;
+            if(position>0) {
+                //还是在列表范围的内容
+                MediaItem mediaItem = mediaItems.get(position);
+                vv.setVideoPath(mediaItem.getData());
+                tvName.setText(mediaItem.getName());
+
+                //设置电池的状态
+                setButtonStatus();
+            }
+        }
+    }
+
+    /**
+     * 播放下一个视频
+     */
+    private void setNextVideo() {
+        //1.判断一下列表
+        if(mediaItems != null&&mediaItems.size()>0) {
+            position ++;
+            if(position <mediaItems.size()) {
+                MediaItem mediaItem = mediaItems.get(position);
+                vv.setVideoPath(mediaItem.getData());
+                tvName.setText(mediaItem.getName());
+
+                //设置按钮的状态
+                setButtonStatus();
+            }else{
+                Toast.makeText(this,"退出播放器",Toast.LENGTH_SHORT).show();
+                finish();
+            }
+        }
+    }
+
     @OnClick({R.id.btn_voice, R.id.btn_swiche_player, R.id.btn_exit, R.id.btn_pre, R.id.btn_start_pause, R.id.btn_next, R.id.btn_swich_screen})
     public void onViewClicked(View view) {
         switch (view.getId()) {
@@ -282,8 +355,10 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             case R.id.btn_swiche_player:
                 break;
             case R.id.btn_exit:
+                finish();
                 break;
             case R.id.btn_pre:
+                setPreVideo();
                 break;
             case R.id.btn_start_pause:
                 if (vv.isPlaying()) {
@@ -300,6 +375,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
                 break;
             case R.id.btn_next:
+                setNextVideo();
                 break;
             case R.id.btn_swich_screen:
                 break;
