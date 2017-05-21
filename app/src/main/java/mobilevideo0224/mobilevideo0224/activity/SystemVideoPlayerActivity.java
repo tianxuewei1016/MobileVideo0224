@@ -67,7 +67,6 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_system_video_player);
         ButterKnife.inject(this);
         vv = (VideoView) findViewById(R.id.vv);
-
         //得到播放地址
         uri = getIntent().getData();
         //设置播放器的三个监听:播放准备好的监听,播放完成的监听,播放出错的监听
