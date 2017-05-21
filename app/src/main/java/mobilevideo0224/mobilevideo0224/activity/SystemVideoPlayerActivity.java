@@ -21,12 +21,14 @@ import android.widget.Toast;
 import android.widget.VideoView;
 
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.Date;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.R;
+import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 import mobilevideo0224.mobilevideo0224.utils.Utils;
 
 public class SystemVideoPlayerActivity extends AppCompatActivity {
@@ -77,6 +79,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     private MyBroadCastReceiver receiver;
 
     private Uri uri;
+    private ArrayList<MediaItem> mediaItems;
+    /**
+     * 视频列表的显示
+     */
+    private int position;
 
     private Handler handler = new Handler() {
         @Override
@@ -96,7 +103,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                     tvSystetime.setText(getSystemTime());
 
                     //循环发消息
-                    sendEmptyMessageDelayed(PROGRESS,1000);
+                    sendEmptyMessageDelayed(PROGRESS, 1000);
                     break;
 
             }
@@ -105,6 +112,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     /**
      * 得到系统的时间
+     *
      * @return
      */
     private String getSystemTime() {
@@ -120,16 +128,36 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         vv = (VideoView) findViewById(R.id.vv);
 
         initData();
-        //得到播放地址
-        uri = getIntent().getData();
+
         setListener();
 
+        getData();
 
-        //设置播放的地址
-        vv.setVideoURI(uri);
+        setData();
+
 
         //设置控制面板
         //vv.setMediaController(new MediaController(this));
+    }
+
+    private void setData() {
+        if (mediaItems != null && mediaItems.size() > 0) {
+            MediaItem mediaItem = mediaItems.get(position);
+            tvName.setText(mediaItem.getName());
+            vv.setVideoPath(mediaItem.getData());
+        } else if (uri != null) {
+            //设置播放的地址
+            vv.setVideoURI(uri);
+        }
+
+    }
+
+    private void getData() {
+        //得到播放地址
+        uri = getIntent().getData();
+        mediaItems = (ArrayList<MediaItem>) getIntent().getSerializableExtra("videolist");
+        position = getIntent().getIntExtra("position",0);
+
     }
 
     private void initData() {
@@ -140,11 +168,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         IntentFilter intentFilter = new IntentFilter();
         //监听点亮变化
         intentFilter.addAction(Intent.ACTION_BATTERY_CHANGED);
-        registerReceiver(receiver,intentFilter);
+        registerReceiver(receiver, intentFilter);
 
     }
 
-    class MyBroadCastReceiver extends BroadcastReceiver{
+    class MyBroadCastReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
@@ -155,6 +183,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     /**
      * 设置点亮的量化,对应的都是点亮的图片
+     *
      * @param level
      */
     private void setBatteryView(int level) {
@@ -279,14 +308,14 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        if(handler != null) {
+        if (handler != null) {
             //把所有消息移除
             handler.removeCallbacksAndMessages(null);
             handler = null;
         }
 
         //取消注册
-        if(receiver != null) {
+        if (receiver != null) {
             unregisterReceiver(receiver);
             receiver = null;
         }
