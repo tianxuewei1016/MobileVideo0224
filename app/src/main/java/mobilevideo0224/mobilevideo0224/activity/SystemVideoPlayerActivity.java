@@ -10,11 +10,14 @@ import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
+import android.os.Vibrator;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
+import android.util.Log;
 import android.view.GestureDetector;
 import android.view.MotionEvent;
 import android.view.View;
+import android.view.WindowManager;
 import android.widget.Button;
 import android.widget.ImageView;
 import android.widget.LinearLayout;
@@ -133,6 +136,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      * 手势识别器
      */
     private GestureDetector detector;
+
+    /**
+     * 震动
+     */
+    private Vibrator vibrator;
 
     private Handler handler = new Handler() {
         @Override
@@ -323,6 +331,19 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         maxVoice = am.getStreamMaxVolume(AudioManager.STREAM_MUSIC);
     }
 
+
+    /**
+     * 滑动的区域
+     */
+    private int touchRang = 0;
+
+    /**
+     * 当按下的时候的音量
+     */
+    private int mVol;
+//    private float startX;
+    private float startY;
+
     /**
      * 触摸事件
      *
@@ -334,7 +355,81 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         //把事件交给手势识别器去解析
         detector.onTouchEvent(event);
         super.onTouchEvent(event);
+        if (event.getAction() == MotionEvent.ACTION_DOWN) {
+            //1.按下
+            //按下的时候记录起始坐标，最大的滑动区域（屏幕的高），当前的音量
+            startY = event.getY();
+//            startX = event.getX();
+            touchRang = Math.min(screenHeight, screenWidth);//screeHeight
+            mVol = am.getStreamVolume(AudioManager.STREAM_MUSIC);
+            //把消息移除
+            handler.removeMessages(HIDE_MEDIACONTROLLER);
+
+        } else if (event.getAction() == MotionEvent.ACTION_MOVE) {
+            float endY = event.getY();
+            float distanceY = startY - endY;
+//            if (startX > screenWidth / 2) {
+                //屏幕滑动的距离
+                //滑动屏幕的距离 ： 总距离  = 改变的声音 ： 总声音
+
+                float delta = (distanceY / touchRang) * maxVoice;
+                // 设置的声音  = 原来记录的 + 改变的声音
+
+                //判断
+                if (delta != 0) {
+                    //改变的声音 = （滑动屏幕的距离 / 总距离)*总声音
+                    int mVoice = (int) Math.min(Math.max(mVol + delta, 0), maxVoice);
+                    updateVoiceProgress(mVoice);
+                //}
+
+//            startY = event.getY();//不能添加
+            }
+//                else {
+//
+//                //左边屏幕--改变亮度
+//                final double FLING_MIN_DISTANCE = 0.5;
+//                final double FLING_MIN_VELOCITY = 0.5;
+//                if (startY - endY > FLING_MIN_DISTANCE
+//                        && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+//                    Log.e("TAG", "up");
+//                    setBrightness(20);
+//                }
+//                if (startY - endY < FLING_MIN_DISTANCE
+//                        && Math.abs(distanceY) > FLING_MIN_VELOCITY) {
+//                    Log.e("TAG", "down");
+//                    setBrightness(-20);
+//                }
+//            }
+
+        } else if (event.getAction() == MotionEvent.ACTION_UP) {
+            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+        }
         return true;
+    }
+
+    /*
+    *
+    * 设置屏幕亮度 lp = 0 全暗 ，lp= -1,根据系统设置， lp = 1; 最亮
+    */
+    public void setBrightness(float brightness) {
+        WindowManager.LayoutParams lp = getWindow().getAttributes();
+        // if (lp.screenBrightness <= 0.1) {
+        // return;
+        // }
+        lp.screenBrightness = lp.screenBrightness + brightness / 255.0f;
+        if (lp.screenBrightness > 1) {
+            lp.screenBrightness = 1;
+            vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            long[] pattern = {10, 200}; // OFF/ON/OFF/ON...
+            vibrator.vibrate(pattern, -1);
+        } else if (lp.screenBrightness < 0.2) {
+            lp.screenBrightness = (float) 0.2;
+            vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+            long[] pattern = {10, 200}; // OFF/ON/OFF/ON...
+            vibrator.vibrate(pattern, -1);
+        }
+        Log.e("TAG", "lp.screenBrightness= " + lp.screenBrightness);
+        getWindow().setAttributes(lp);
     }
 
     /**
@@ -469,12 +564,12 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
             }
         });
-        
+
         //监听拖动声音
         seekbarVoice.setOnSeekBarChangeListener(new SeekBar.OnSeekBarChangeListener() {
             @Override
             public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-                if(fromUser) {
+                if (fromUser) {
                     updateVoiceProgress(progress);
                 }
             }
@@ -493,18 +588,19 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     /**
      * 设置滑动改变声音
+     *
      * @param progress
      */
     private void updateVoiceProgress(int progress) {
 
         currentVoice = progress;
         //真正改变的声音
-        am.setStreamVolume(AudioManager.STREAM_MUSIC,currentVoice,0);
+        am.setStreamVolume(AudioManager.STREAM_MUSIC, currentVoice, 0);
         //改变进度条
         seekbarVoice.setProgress(currentVoice);
-        if(currentVoice<=0) {
+        if (currentVoice <= 0) {
             isMute = true;
-        }else{
+        } else {
             isMute = false;
         }
     }
@@ -554,13 +650,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                 updateVoice(isMute);
                 break;
             case R.id.btn_swiche_player:
-                if (isFullScreen) {
-                    //默认
-                    setVideoType(DEFUALT_SCREEN);
-                } else {
-                    //全屏
-                    setVideoType(FULL_SCREEN);
-                }
+
                 break;
             case R.id.btn_exit:
                 finish();
@@ -576,6 +666,13 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                 setNextVideo();
                 break;
             case R.id.btn_swich_screen:
+                if (isFullScreen) {
+                    //默认
+                    setVideoType(DEFUALT_SCREEN);
+                } else {
+                    //全屏
+                    setVideoType(FULL_SCREEN);
+                }
                 break;
         }
         handler.removeMessages(HIDE_MEDIACONTROLLER);
@@ -583,13 +680,13 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     }
 
     private void updateVoice(boolean isMute) {
-        if(isMute) {
+        if (isMute) {
             //静音
-            am.setStreamVolume(AudioManager.STREAM_MUSIC,0,0);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, 0, 0);
             seekbarVoice.setProgress(0);
-        }else {
+        } else {
             //非静音
-            am.setStreamVolume(AudioManager.STREAM_MUSIC,currentVoice,0);
+            am.setStreamVolume(AudioManager.STREAM_MUSIC, currentVoice, 0);
             seekbarVoice.setProgress(currentVoice);
         }
     }

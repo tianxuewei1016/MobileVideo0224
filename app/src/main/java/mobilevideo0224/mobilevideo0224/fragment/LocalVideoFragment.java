@@ -65,7 +65,7 @@ public class LocalVideoFragment extends BaseFragment {
         return view;
     }
 
-    class MyOnItemClickListener implements AdapterView.OnItemClickListener{
+    class MyOnItemClickListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -76,10 +76,10 @@ public class LocalVideoFragment extends BaseFragment {
              * 调用系统的播放器播放视频
              */
             //Intent intent = new Intent();
-            Intent intent = new Intent(mContext,SystemVideoPlayerActivity.class);
+            Intent intent = new Intent(mContext, SystemVideoPlayerActivity.class);
             Bundle bunlder = new Bundle();
-            bunlder.putSerializable("videolist",mediaItems);
-            intent.putExtra("position",position);
+            bunlder.putSerializable("videolist", mediaItems);
+            intent.putExtra("position", position);
             intent.putExtras(bunlder);
             startActivity(intent);
         }
@@ -92,6 +92,9 @@ public class LocalVideoFragment extends BaseFragment {
         getData();
     }
 
+    /**
+     * 得到数据
+     */
     private void getData() {
         new Thread() {
             public void run() {
@@ -99,28 +102,35 @@ public class LocalVideoFragment extends BaseFragment {
                 ContentResolver resolver = mContext.getContentResolver();
                 Uri uri = MediaStore.Video.Media.EXTERNAL_CONTENT_URI;
                 String[] objs = {
-                        MediaStore.Video.Media.DISPLAY_NAME,//在sdcard显示的视频名称
-                        MediaStore.Video.Media.DURATION,//视频的时长,毫秒
-                        MediaStore.Video.Media.SIZE,//文件大小-byte
-                        MediaStore.Video.Media.DATA,//在sdcard的路径-播放地址
+                        MediaStore.Video.Media.DISPLAY_NAME,//视频在sdcard上的名称
+                        MediaStore.Video.Media.DURATION,//视频时长
+                        MediaStore.Video.Media.SIZE,//视频文件的大小
+                        MediaStore.Video.Media.DATA//视频播放地址
                 };
                 Cursor cursor = resolver.query(uri, objs, null, null, null);
                 if (cursor != null) {
                     while (cursor.moveToNext()) {
-                        String name = cursor.getString(0);
-                        long duration = cursor.getLong(1);
-                        long size = cursor.getLong(2);
-                        String data = cursor.getString(3);
+                        //里面也可以是0
+                        String name = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DISPLAY_NAME));
+                        //里面也可以是1
+                        long duration = cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media.DURATION));
+                        //里面也可以是2
+                        long size = cursor.getLong(cursor.getColumnIndex(MediaStore.Video.Media.SIZE));
+                        //里面也可以是3
+                        String data = cursor.getString(cursor.getColumnIndex(MediaStore.Video.Media.DATA));
+                        Log.e("TAG", "name==" + name + ",duration==" + duration + ",data===" + data);
 
                         mediaItems.add(new MediaItem(name, duration, size, data));
 
-                        //使用handler
-                        handler.sendEmptyMessage(0);
+
                     }
+
                     cursor.close();
                 }
+
+                //使用handler
+                handler.sendEmptyMessage(0);
             }
         }.start();
     }
 }
-
