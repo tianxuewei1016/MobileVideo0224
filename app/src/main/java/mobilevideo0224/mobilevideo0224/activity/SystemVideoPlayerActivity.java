@@ -239,6 +239,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         //vv.setMediaController(new MediaController(this));
     }
 
+
     private void setData() {
         if (mediaItems != null && mediaItems.size() > 0) {
             MediaItem mediaItem = mediaItems.get(position);
