@@ -1,8 +1,10 @@
 package mobilevideo0224.mobilevideo0224.activity;
 
 
+import android.app.AlertDialog;
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
@@ -172,11 +174,11 @@ public class VitamioVideoPlayerActivity extends AppCompatActivity {
             super.handleMessage(msg);
             switch (msg.what) {
                 case SHOW_NET_SPEED:
-                    if(isNetUri) {
+                    if (isNetUri) {
                         String netSpeed = utils.getNetSpeed(VitamioVideoPlayerActivity.this);
-                        tvLoadingNetSpeed.setText("整在加载中...."+netSpeed);
-                        tvNetSpeed.setText("正在缓冲中...."+netSpeed);
-                        sendEmptyMessageDelayed(SHOW_NET_SPEED,1000);
+                        tvLoadingNetSpeed.setText("整在加载中...." + netSpeed);
+                        tvNetSpeed.setText("正在缓冲中...." + netSpeed);
+                        sendEmptyMessageDelayed(SHOW_NET_SPEED, 1000);
                     }
                     break;
                 case PROGRESS:
@@ -582,7 +584,8 @@ public class VitamioVideoPlayerActivity extends AppCompatActivity {
         vv.setOnErrorListener(new MediaPlayer.OnErrorListener() {
             @Override
             public boolean onError(MediaPlayer mp, int what, int extra) {
-                Toast.makeText(VitamioVideoPlayerActivity.this, "播放出错了...", Toast.LENGTH_SHORT).show();
+                //Toast.makeText(VitamioVideoPlayerActivity.this, "播放出错了...", Toast.LENGTH_SHORT).show();
+                showErrorDialog();
                 return false;
             }
         });
@@ -649,6 +652,22 @@ public class VitamioVideoPlayerActivity extends AppCompatActivity {
 
             }
         });
+    }
+
+    /**
+     * 万能播放器播放出错,弹出对话框
+     */
+    private void showErrorDialog() {
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("当前视频不可播放，请检查网络或者视频文件是否有损坏！")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        finish();
+                    }
+                })
+                .show();
     }
 
     /**
