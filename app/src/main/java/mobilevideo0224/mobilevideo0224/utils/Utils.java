@@ -75,7 +75,7 @@ public class Utils {
      * @param context
      * @return
      */
-    public String showNetSpeed(Context context) {
+    public String getNetSpeed(Context context) {
 
         long nowTotalRxBytes = TrafficStats.getUidRxBytes(context.getApplicationInfo().uid) == TrafficStats.UNSUPPORTED ? 0 : (TrafficStats.getTotalRxBytes() / 1024);//转为KB;
         long nowTimeStamp = System.currentTimeMillis();

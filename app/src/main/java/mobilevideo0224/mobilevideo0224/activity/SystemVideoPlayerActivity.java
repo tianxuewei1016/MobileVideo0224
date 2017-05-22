@@ -50,6 +50,10 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      */
     private static final int HIDE_MEDIACONTROLLER = 1;
     /**
+     * 显示网速的
+     */
+    private static final int SHOW_NET_SPEED = 2;
+    /**
      * 默认视频画面
      */
     private static final int DEFUALT_SCREEN = 0;
@@ -128,6 +132,11 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     TextView tvNetSpeed;
     @InjectView(R.id.ll_buffering)
     LinearLayout llBuffering;
+    @InjectView(R.id.tv_loading_net_speed)
+    TextView tvLoadingNetSpeed;
+    @InjectView(R.id.ll_loading)
+    LinearLayout llLoading;
+
 
     private Utils utils;
     private MyBroadCastReceiver receiver;
@@ -150,7 +159,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     /**
      * 是否是网络资源
      */
-    private boolean isNetUri;
+    private boolean isNetUri = true;
 
     private int preCurrentPosition;
 
@@ -159,6 +168,14 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
+                case SHOW_NET_SPEED:
+                    if(isNetUri) {
+                        String netSpeed = utils.getNetSpeed(SystemVideoPlayerActivity.this);
+                        tvLoadingNetSpeed.setText("整在加载中...."+netSpeed);
+                        tvNetSpeed.setText("正在缓冲中...."+netSpeed);
+                        sendEmptyMessageDelayed(SHOW_NET_SPEED,1000);
+                    }
+                    break;
                 case PROGRESS:
                     //得到当前的进度
                     int currentPosition = vv.getCurrentPosition();
@@ -181,12 +198,12 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                         seekbarVideo.setSecondaryProgress(0);
                     }
 
-                    if(isNetUri && vv.isPlaying()) {
-                        int duration  = currentPosition - preCurrentPosition;
-                        if(duration < 500) {
+                    if (isNetUri && vv.isPlaying()) {
+                        int duration = currentPosition - preCurrentPosition;
+                        if (duration < 500) {
                             //卡
                             llBuffering.setVisibility(View.VISIBLE);
-                        }else {
+                        } else {
                             //不卡
                             llBuffering.setVisibility(View.GONE);
                         }
@@ -227,6 +244,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         seekbarVoice.setMax(maxVoice);
         //设置当前进度
         seekbarVoice.setProgress(currentVoice);
+
+        //发消息开始显示网速
+        handler.sendEmptyMessage(SHOW_NET_SPEED);
 
         setListener();
 
@@ -542,6 +562,9 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
                 //发消息开始更新播放速度
                 handler.sendEmptyMessage(PROGRESS);
+
+                //隐藏加载的效果
+                llLoading.setVisibility(View.GONE);
 
                 //默认隐藏
                 hideMediaController();
