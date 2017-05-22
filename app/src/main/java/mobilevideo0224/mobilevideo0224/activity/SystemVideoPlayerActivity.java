@@ -15,6 +15,7 @@ import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
 import android.view.GestureDetector;
+import android.view.KeyEvent;
 import android.view.MotionEvent;
 import android.view.View;
 import android.view.WindowManager;
@@ -737,6 +738,25 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             //按钮状态--暂停
             btnStartPause.setBackgroundResource(R.drawable.btn_pause_selector);
         }
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if(keyCode ==KeyEvent.KEYCODE_VOLUME_DOWN) {
+            currentVoice--;
+            updateVoiceProgress(currentVoice);
+            handler.removeMessages(HIDE_MEDIACONTROLLER);
+            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+            return true;
+
+        }else if(keyCode ==KeyEvent.KEYCODE_VOLUME_UP) {
+            currentVoice++;
+            updateVoiceProgress(currentVoice);
+            handler.removeMessages(HIDE_MEDIACONTROLLER);
+            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+            return true;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     @Override
