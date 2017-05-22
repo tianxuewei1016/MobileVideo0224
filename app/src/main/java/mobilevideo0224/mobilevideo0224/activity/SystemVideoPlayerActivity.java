@@ -2,6 +2,7 @@ package mobilevideo0224.mobilevideo0224.activity;
 
 import android.content.BroadcastReceiver;
 import android.content.Context;
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.media.AudioManager;
@@ -11,6 +12,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
 import android.os.Vibrator;
+import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.util.DisplayMetrics;
 import android.util.Log;
@@ -571,6 +573,13 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
                 //设置默认屏幕
                 setVideoType(DEFUALT_SCREEN);
+
+                if(vv.isPlaying()) {
+                    //设置暂停
+                    btnStartPause.setBackgroundResource(R.drawable.btn_pause_selector);
+                }else{
+                    btnStartPause.setBackgroundResource(R.drawable.btn_start_selector);
+                }
             }
         });
 
@@ -734,7 +743,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
                 updateVoice(isMute);
                 break;
             case R.id.btn_swiche_player:
-
+                switchPlayer();
                 break;
             case R.id.btn_exit:
                 finish();
@@ -761,6 +770,22 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
         }
         handler.removeMessages(HIDE_MEDIACONTROLLER);
         handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+    }
+
+    /**
+     * 手动切换为万能播放器
+     */
+    private void switchPlayer() {
+        new AlertDialog.Builder(this)
+                .setTitle("提示")
+                .setMessage("当前使用系统播放器播放，当播放有声音没有画面，请切换到万能播放器播放")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        //转换为万能播放器
+                        startVitamioPlayer();
+                    }
+                }).setNegativeButton("取消", null).show();
     }
 
     private void updateVoice(boolean isMute) {

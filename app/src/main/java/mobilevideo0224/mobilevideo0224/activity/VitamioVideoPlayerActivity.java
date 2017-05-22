@@ -736,7 +736,7 @@ public class VitamioVideoPlayerActivity extends AppCompatActivity {
                 updateVoice(isMute);
                 break;
             case R.id.btn_swiche_player:
-
+                switchPlayer();
                 break;
             case R.id.btn_exit:
                 finish();
@@ -763,6 +763,43 @@ public class VitamioVideoPlayerActivity extends AppCompatActivity {
         }
         handler.removeMessages(HIDE_MEDIACONTROLLER);
         handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
+    }
+
+    /**
+     * 手动切换为系统的播放器
+     */
+    private void switchPlayer() {
+        new AlertDialog.Builder(this)
+                .setTitle("标题")
+                .setMessage("如果当前为万能播放器播放，当播放有色块，播放质量不好，请切换到系统播放器播放")
+                .setPositiveButton("确定", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        startSystemPlayer();
+                    }
+                }).setNegativeButton("取消", null).show();
+    }
+
+    /**
+     * 切换为播放器的方法
+     */
+    private void startSystemPlayer() {
+        if (vv != null) {
+            vv.stopPlayback();
+        }
+
+        Intent intent = new Intent(this, SystemVideoPlayerActivity.class);
+        if (mediaItems != null && mediaItems.size() > 0) {
+            Bundle bunlder = new Bundle();
+            bunlder.putSerializable("videolist", mediaItems);
+            intent.putExtra("position", position);
+            //放入Bundler
+            intent.putExtras(bunlder);
+        } else if (uri != null) {
+            intent.setData(uri);
+        }
+        startActivity(intent);
+        finish();
     }
 
     private void updateVoice(boolean isMute) {
