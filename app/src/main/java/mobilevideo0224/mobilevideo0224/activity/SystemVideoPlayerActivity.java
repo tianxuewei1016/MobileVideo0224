@@ -57,6 +57,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      * 全屏视频画面
      */
     private static final int FULL_SCREEN = 1;
+
     /**
      * 是否全屏
      */
@@ -123,6 +124,10 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
     LinearLayout llBottom;
     @InjectView(R.id.activity_system_video_player)
     RelativeLayout activitySystemVideoPlayer;
+    @InjectView(R.id.tv_net_speed)
+    TextView tvNetSpeed;
+    @InjectView(R.id.ll_buffering)
+    LinearLayout llBuffering;
 
     private Utils utils;
     private MyBroadCastReceiver receiver;
@@ -147,6 +152,8 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      */
     private boolean isNetUri;
 
+    private int preCurrentPosition;
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -163,17 +170,29 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
                     //得到系统的时间
                     tvSystetime.setText(getSystemTime());
-                    
+
                     //设置视频缓存的效果
-                    if(isNetUri) {
+                    if (isNetUri) {
                         int bufferPercentage = vv.getBufferPercentage();
                         int totalBuffer = bufferPercentage * seekbarVideo.getMax();
-                        int secondaryProgress  = totalBuffer / 100;
+                        int secondaryProgress = totalBuffer / 100;
                         seekbarVideo.setSecondaryProgress(secondaryProgress);
-                    }else{
+                    } else {
                         seekbarVideo.setSecondaryProgress(0);
                     }
 
+                    if(isNetUri && vv.isPlaying()) {
+                        int duration  = currentPosition - preCurrentPosition;
+                        if(duration < 500) {
+                            //卡
+                            llBuffering.setVisibility(View.VISIBLE);
+                        }else {
+                            //不卡
+                            llBuffering.setVisibility(View.GONE);
+                        }
+                        //最后想着赋值
+                        preCurrentPosition = currentPosition;
+                    }
                     //循环发消息
                     sendEmptyMessageDelayed(PROGRESS, 1000);
                     break;
@@ -358,7 +377,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
      * 当按下的时候的音量
      */
     private int mVol;
-//    private float startX;
+    //    private float startX;
     private float startY;
 
     /**
@@ -386,17 +405,17 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             float endY = event.getY();
             float distanceY = startY - endY;
 //            if (startX > screenWidth / 2) {
-                //屏幕滑动的距离
-                //滑动屏幕的距离 ： 总距离  = 改变的声音 ： 总声音
+            //屏幕滑动的距离
+            //滑动屏幕的距离 ： 总距离  = 改变的声音 ： 总声音
 
-                float delta = (distanceY / touchRang) * maxVoice;
-                // 设置的声音  = 原来记录的 + 改变的声音
+            float delta = (distanceY / touchRang) * maxVoice;
+            // 设置的声音  = 原来记录的 + 改变的声音
 
-                //判断
-                if (delta != 0) {
-                    //改变的声音 = （滑动屏幕的距离 / 总距离)*总声音
-                    int mVoice = (int) Math.min(Math.max(mVol + delta, 0), maxVoice);
-                    updateVoiceProgress(mVoice);
+            //判断
+            if (delta != 0) {
+                //改变的声音 = （滑动屏幕的距离 / 总距离)*总声音
+                int mVoice = (int) Math.min(Math.max(mVol + delta, 0), maxVoice);
+                updateVoiceProgress(mVoice);
                 //}
 
 //            startY = event.getY();//不能添加
@@ -628,7 +647,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             if (position > 0) {
                 //还是在列表范围的内容
                 MediaItem mediaItem = mediaItems.get(position);
-                isNetUri =  utils.isNetUri(mediaItem.getData());
+                isNetUri = utils.isNetUri(mediaItem.getData());
                 vv.setVideoPath(mediaItem.getData());
                 tvName.setText(mediaItem.getName());
 
@@ -647,7 +666,7 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
             position++;
             if (position < mediaItems.size()) {
                 MediaItem mediaItem = mediaItems.get(position);
-                isNetUri =  utils.isNetUri(mediaItem.getData());
+                isNetUri = utils.isNetUri(mediaItem.getData());
                 vv.setVideoPath(mediaItem.getData());
                 tvName.setText(mediaItem.getName());
 
@@ -760,18 +779,18 @@ public class SystemVideoPlayerActivity extends AppCompatActivity {
 
     @Override
     public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if(keyCode ==KeyEvent.KEYCODE_VOLUME_DOWN) {
+        if (keyCode == KeyEvent.KEYCODE_VOLUME_DOWN) {
             currentVoice--;
             updateVoiceProgress(currentVoice);
             handler.removeMessages(HIDE_MEDIACONTROLLER);
-            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
             return true;
 
-        }else if(keyCode ==KeyEvent.KEYCODE_VOLUME_UP) {
+        } else if (keyCode == KeyEvent.KEYCODE_VOLUME_UP) {
             currentVoice++;
             updateVoiceProgress(currentVoice);
             handler.removeMessages(HIDE_MEDIACONTROLLER);
-            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER,4000);
+            handler.sendEmptyMessageDelayed(HIDE_MEDIACONTROLLER, 4000);
             return true;
         }
         return super.onKeyDown(keyCode, event);
