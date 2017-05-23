@@ -10,10 +10,10 @@ import android.widget.TextView;
 import org.xutils.image.ImageOptions;
 import org.xutils.x;
 
-import java.util.List;
+import java.util.ArrayList;
 
 import mobilevideo0224.mobilevideo0224.R;
-import mobilevideo0224.mobilevideo0224.bean.MoveInfo;
+import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 
 /**
  * 作者：田学伟 on 2017/5/22 20:07
@@ -23,12 +23,13 @@ import mobilevideo0224.mobilevideo0224.bean.MoveInfo;
 
 public class NetVideoAdapter extends BaseAdapter{
     private final Context mContext;
-    private final List<MoveInfo.TrailersBean> datas;
+    private final ArrayList<MediaItem> datas;
+
     private ImageOptions imageOptions;
 
-    public NetVideoAdapter(Context mContext, List<MoveInfo.TrailersBean> datas) {
+    public NetVideoAdapter(Context mContext, ArrayList<MediaItem> mediaItems) {
         this.mContext = mContext;
-        this.datas = datas;
+        this.datas = mediaItems;
         imageOptions = new ImageOptions.Builder()
                 .setIgnoreGif(false)//是否忽略gif图。false表示不忽略。不写这句，默认是true
                 .setImageScaleType(ImageView.ScaleType.CENTER_CROP)
@@ -43,8 +44,8 @@ public class NetVideoAdapter extends BaseAdapter{
     }
 
     @Override
-    public MoveInfo.TrailersBean getItem(int position) {
-        return datas.get(position);
+    public Object getItem(int position) {
+        return null;
     }
 
     @Override
@@ -68,11 +69,11 @@ public class NetVideoAdapter extends BaseAdapter{
         }
 
         //根据位置得到对应的数据
-        MoveInfo.TrailersBean trailersBean = datas.get(position);
-        viewHolder.tv_name.setText(trailersBean.getMovieName());
-        viewHolder.tv_size.setText(trailersBean.getVideoLength()+"秒");
-        viewHolder.tv_duration.setText(trailersBean.getVideoTitle());
-        x.image().bind(viewHolder.iv_icon, trailersBean.getCoverImg(),imageOptions);
+        MediaItem trailersBean = datas.get(position);
+        viewHolder.tv_name.setText(trailersBean.getName());
+        viewHolder.tv_size.setText(trailersBean.getSize()+"秒");
+        viewHolder.tv_duration.setText(trailersBean.getDesc());
+        x.image().bind(viewHolder.iv_icon, trailersBean.getImageUrl(),imageOptions);
         return convertView;
     }
     static class ViewHolder{

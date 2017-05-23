@@ -10,11 +10,11 @@ import java.io.Serializable;
 
 public class MediaItem implements Serializable {
 
-    String name ;
-    long duration ;
-    long size ;
-    String data ;
-    String artist ;
+    String name;
+    long duration;
+    long size;
+    String data;
+    String artist;
     /**
      * 图片路径
      */
@@ -25,6 +25,10 @@ public class MediaItem implements Serializable {
     String desc;
 
     String heightUrl;
+
+    public MediaItem() {
+
+    }
 
     public MediaItem(String name, long duration, long size, String data) {
         this.name = name;
