@@ -1,5 +1,6 @@
 package mobilevideo0224.mobilevideo0224.activity;
 
+import android.content.Intent;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
@@ -15,6 +16,7 @@ import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.R;
+import mobilevideo0224.mobilevideo0224.service.MusicPlayService;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity {
 
@@ -52,6 +54,9 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         ivIcon.setBackgroundResource(R.drawable.animation_bg);
         AnimationDrawable drawable = (AnimationDrawable) ivIcon.getBackground();
         drawable.start();
+
+        Intent intent = new Intent(this, MusicPlayService.class);
+        startService(intent);
     }
 
     @OnClick({R.id.btn_playmode, R.id.btn_pre, R.id.btn_start_pause, R.id.btn_next, R.id.btn_lyric})
