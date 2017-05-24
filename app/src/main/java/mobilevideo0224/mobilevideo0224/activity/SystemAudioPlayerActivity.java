@@ -1,5 +1,6 @@
 package mobilevideo0224.mobilevideo0224.activity;
 
+import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -48,7 +49,9 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         setContentView(R.layout.activity_system_audio_player);
         ButterKnife.inject(this);
 
-
+        ivIcon.setBackgroundResource(R.drawable.animation_bg);
+        AnimationDrawable drawable = (AnimationDrawable) ivIcon.getBackground();
+        drawable.start();
     }
 
     @OnClick({R.id.btn_playmode, R.id.btn_pre, R.id.btn_start_pause, R.id.btn_next, R.id.btn_lyric})
