@@ -7,8 +7,9 @@ import android.widget.BaseAdapter;
 import android.widget.ImageView;
 import android.widget.TextView;
 
+import com.bumptech.glide.Glide;
+
 import org.xutils.image.ImageOptions;
-import org.xutils.x;
 
 import java.util.ArrayList;
 
@@ -18,7 +19,7 @@ import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 /**
  * 作者：田学伟 on 2017/5/22 20:07
  * QQ：93226539
- * 作用：
+ * 作用：网络视频的播放器
  */
 
 public class NetVideoAdapter extends BaseAdapter{
@@ -73,7 +74,19 @@ public class NetVideoAdapter extends BaseAdapter{
         viewHolder.tv_name.setText(trailersBean.getName());
         viewHolder.tv_size.setText(trailersBean.getSize()+"秒");
         viewHolder.tv_duration.setText(trailersBean.getDesc());
-        x.image().bind(viewHolder.iv_icon, trailersBean.getImageUrl(),imageOptions);
+        //x.image().bind(viewHolder.iv_icon, trailersBean.getImageUrl(),imageOptions);
+//        使用Picasso请求图片
+//        Picasso.with(mContext)
+//                .load(trailersBean.getImageUrl())
+//                .placeholder(R.drawable.video_default)
+//                .error(R.drawable.video_default)
+//                .into(viewHolder.iv_icon);
+        //使用glide请求图片
+        Glide.with(mContext)
+                .load(trailersBean.getImageUrl())
+                .placeholder(R.drawable.video_default)
+                .error(R.drawable.video_default)
+                .into(viewHolder.iv_icon);
         return convertView;
     }
     static class ViewHolder{
