@@ -4,12 +4,15 @@ import android.app.Service;
 import android.content.ContentResolver;
 import android.content.Intent;
 import android.database.Cursor;
+import android.media.MediaPlayer;
 import android.net.Uri;
 import android.os.IBinder;
 import android.os.RemoteException;
 import android.provider.MediaStore;
 import android.util.Log;
+import android.widget.Toast;
 
+import java.io.IOException;
 import java.util.ArrayList;
 
 import mobilevideo0224.mobilevideo0224.IMusicPlayService;
@@ -79,6 +82,11 @@ public class MusicPlayService extends Service {
         public void pre() throws RemoteException {
             service.pre();
         }
+
+        @Override
+        public boolean isPlaying() throws RemoteException {
+            return mediaPlayer.isPlaying();
+        }
     };
 
     public MusicPlayService() {
@@ -90,6 +98,12 @@ public class MusicPlayService extends Service {
     }
 
     private ArrayList<MediaItem> mediaItems;
+
+    private MediaPlayer mediaPlayer;
+
+    private int position;
+
+    private MediaItem mediaItem;
 
     @Override
     public void onCreate() {
@@ -143,20 +157,76 @@ public class MusicPlayService extends Service {
      * @param position
      */
     private void openAudio(int position) {
+        this.position = position;
+        if (mediaItems != null && mediaItems.size() > 0) {
 
+            if (position < mediaItems.size()) {
+                mediaItem = mediaItems.get(position);
+
+                //如果不为空释放之前的播放音频的资源
+                if (mediaPlayer != null) {
+                    mediaPlayer.reset();
+                    mediaPlayer = null;
+                }
+                try {
+                    mediaPlayer = new MediaPlayer();
+                    //设置播放地址
+                    mediaPlayer.setDataSource(mediaItem.getData());
+                    //设置最基本的三个监听：准备完成，播放出错，播放完成
+                    mediaPlayer.setOnPreparedListener(new MyOnPreparedListener());
+                    mediaPlayer.setOnErrorListener(new MyOnErrorListener());
+                    mediaPlayer.setOnCompletionListener(new MyOnCompletionListener());
+                    //准备
+                    mediaPlayer.prepareAsync();
+
+
+                } catch (IOException e) {
+                    e.printStackTrace();
+                }
+            }
+        } else {
+            Toast.makeText(MusicPlayService.this, "音频还没有加载完成", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    class MyOnPreparedListener implements MediaPlayer.OnPreparedListener {
+
+        @Override
+        public void onPrepared(MediaPlayer mp) {
+            start();
+        }
+    }
+
+    class MyOnErrorListener implements MediaPlayer.OnErrorListener {
+
+        @Override
+        public boolean onError(MediaPlayer mp, int what, int extra) {
+            next();
+            return true;
+        }
+    }
+
+    class MyOnCompletionListener implements MediaPlayer.OnCompletionListener {
+
+        @Override
+        public void onCompletion(MediaPlayer mp) {
+            next();
+        }
     }
 
     /**
      * 播放音频
      */
     private void start() {
+        //开始播放
+        mediaPlayer.start();
     }
 
     /**
      * 暂停音频
      */
     private void pause() {
-
+        mediaPlayer.pause();
     }
 
     /**
