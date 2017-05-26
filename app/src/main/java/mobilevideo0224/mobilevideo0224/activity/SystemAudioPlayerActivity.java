@@ -1,12 +1,16 @@
 package mobilevideo0224.mobilevideo0224.activity;
 
+import android.content.BroadcastReceiver;
 import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.drawable.AnimationDrawable;
 import android.os.Bundle;
+import android.os.Handler;
 import android.os.IBinder;
+import android.os.Message;
 import android.os.RemoteException;
 import android.support.v7.app.AppCompatActivity;
 import android.view.View;
@@ -23,6 +27,7 @@ import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.IMusicPlayService;
 import mobilevideo0224.mobilevideo0224.R;
 import mobilevideo0224.mobilevideo0224.service.MusicPlayService;
+import mobilevideo0224.mobilevideo0224.utils.Utils;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity {
 
@@ -58,6 +63,34 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
      * 音乐的下标的位置
      */
     private int position;
+    private MyReceiver receiver;
+    private Utils utils;
+
+    private final static int PROGRESS = 0;
+
+    private Handler handler = new Handler() {
+        @Override
+        public void handleMessage(Message msg) {
+            super.handleMessage(msg);
+            switch (msg.what) {
+                case PROGRESS:
+                    try {
+                        int currentPosition = service.getCurrentPosition();
+                        seekbarAudio.setProgress(currentPosition);
+
+                        //设置更新时间
+                        tvTime.setText(utils.stringForTime(currentPosition) + "/" + utils.stringForTime(service.getDuration()));
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+
+                    //设置更新时间
+                    removeMessages(PROGRESS);
+                    sendEmptyMessageDelayed(PROGRESS, 1000);
+                    break;
+            }
+        }
+    };
 
     private ServiceConnection conon = new ServiceConnection() {
         /**
@@ -94,12 +127,44 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_system_audio_player);
         ButterKnife.inject(this);
+        initData();
 
         ivIcon.setBackgroundResource(R.drawable.animation_bg);
         AnimationDrawable drawable = (AnimationDrawable) ivIcon.getBackground();
         drawable.start();
         getData();
         startAndBindService();
+    }
+
+    private void initData() {
+        //注册广播
+        receiver = new MyReceiver();
+        IntentFilter intentFilter = new IntentFilter();
+        intentFilter.addAction(MusicPlayService.OPEN_COMPLETE);
+        registerReceiver(receiver, intentFilter);
+        utils = new Utils();
+    }
+
+    class MyReceiver extends BroadcastReceiver {
+
+        @Override
+        public void onReceive(Context context, Intent intent) {
+            //主线程
+            setViewData();
+        }
+    }
+
+    private void setViewData() {
+        try {
+            tvArtist.setText(service.getArtistName());
+            tvAudioname.setText(service.getAudioName());
+            int duration = service.getDuration();
+            seekbarAudio.setMax(duration);
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        //发送消息更新进度
+        handler.sendEmptyMessage(PROGRESS);
     }
 
     private void getData() {
@@ -109,7 +174,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     private void startAndBindService() {
         Intent intent = new Intent(this, MusicPlayService.class);
         //绑定-得到服务的操作对象-IMusicPlayService service
-        bindService(intent,conon, Context.BIND_AUTO_CREATE);
+        bindService(intent, conon, Context.BIND_AUTO_CREATE);
         //防止多次实例化Service
         startService(intent);
     }
@@ -147,10 +212,14 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
 
     @Override
     protected void onDestroy() {
-        super.onDestroy();
         if (conon != null) {
             unbindService(conon);
             conon = null;
         }
+        if(receiver != null) {
+            unregisterReceiver(receiver);
+            receiver = null;
+        }
+        super.onDestroy();
     }
 }
