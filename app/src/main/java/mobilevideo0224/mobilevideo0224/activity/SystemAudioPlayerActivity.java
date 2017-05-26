@@ -106,7 +106,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             if (service != null) {
                 try {
                     if (notification) {
-                        //什么不用做
+                        //从新从Service获取数据
                         setViewData();
                     } else {
                         service.openAudio(position);//打开播放第0个音频
@@ -192,6 +192,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
 
     private void setViewData() {
         try {
+            setButtonImage();
             tvArtist.setText(service.getArtistName());
             tvAudioname.setText(service.getAudioName());
             int duration = service.getDuration();
@@ -222,8 +223,14 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     public void onViewClicked(View view) {
         switch (view.getId()) {
             case R.id.btn_playmode:
+                setPlayMode();
                 break;
             case R.id.btn_pre:
+                try {
+                    service.pre();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 break;
             case R.id.btn_start_pause:
                 try {
@@ -243,9 +250,49 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
                 }
                 break;
             case R.id.btn_next:
+                try {
+                    service.next();
+                } catch (RemoteException e) {
+                    e.printStackTrace();
+                }
                 break;
             case R.id.btn_lyric:
                 break;
+        }
+    }
+
+    private void setPlayMode() {
+        try {
+            int playmode = service.getPlaymode();
+            if (playmode == MusicPlayService.REPEAT_NORMAL) {
+                playmode = MusicPlayService.REPEAT_SINGLE;
+            } else if (playmode == MusicPlayService.REPEAT_SINGLE) {
+                playmode = MusicPlayService.REPEAT_ALL;
+            } else if (playmode == MusicPlayService.REPEAT_ALL) {
+                playmode = MusicPlayService.REPEAT_NORMAL;
+            }
+            //保存到服务里面
+            service.setPlaymode(playmode);
+            setButtonImage();
+
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+    }
+
+    private void setButtonImage() {
+        //从服务器得到播放模式
+        try {
+            int playmode = service.getPlaymode();
+            if (playmode == MusicPlayService.REPEAT_NORMAL) {
+                btnPlaymode.setBackgroundResource(R.drawable.btn_playmode_normal_selector);
+            } else if (playmode == MusicPlayService.REPEAT_SINGLE) {
+                btnPlaymode.setBackgroundResource(R.drawable.btn_playmode_single_selector);
+            } else if (playmode == MusicPlayService.REPEAT_ALL) {
+                btnPlaymode.setBackgroundResource(R.drawable.btn_playmode_all_selector);
+            }
+        } catch (RemoteException e) {
+            e.printStackTrace();
         }
     }
 

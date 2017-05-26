@@ -39,15 +39,15 @@ public class LocalAudioFragment extends BaseFragment {
 
     private ArrayList<MediaItem> mediaItems;
 
-    private Handler handler = new Handler(){
+    private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
-            if(mediaItems != null &&  mediaItems.size()>0) {
+            if (mediaItems != null && mediaItems.size() > 0) {
                 tvNoMedia.setVisibility(View.GONE);
                 adapter = new LocalVideoAdapter(mContext, mediaItems, false);
                 listview.setAdapter(adapter);
-            }else {
+            } else {
                 tvNoMedia.setVisibility(View.VISIBLE);
             }
         }
@@ -63,7 +63,7 @@ public class LocalAudioFragment extends BaseFragment {
         return view;
     }
 
-    class MyOnItemClickListener implements AdapterView.OnItemClickListener{
+    class MyOnItemClickListener implements AdapterView.OnItemClickListener {
 
         @Override
         public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
@@ -72,6 +72,7 @@ public class LocalAudioFragment extends BaseFragment {
 
             //传递点击的位置
             intent.putExtra("position", position);
+            intent.putExtra("notification", false);//是否来自状态栏
             startActivity(intent);
         }
     }
