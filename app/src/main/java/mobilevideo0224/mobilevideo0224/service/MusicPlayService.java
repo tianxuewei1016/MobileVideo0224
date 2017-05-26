@@ -16,6 +16,8 @@ import android.provider.MediaStore;
 import android.util.Log;
 import android.widget.Toast;
 
+import org.greenrobot.eventbus.EventBus;
+
 import java.io.IOException;
 import java.util.ArrayList;
 
@@ -244,7 +246,9 @@ public class MusicPlayService extends Service {
         @Override
         public void onPrepared(MediaPlayer mp) {
             //发广播
-            notifyChange(OPEN_COMPLETE);
+//            notifyChange(OPEN_COMPLETE);
+            //3.发消息
+            EventBus.getDefault().post(mediaItem);
             start();
         }
     }
