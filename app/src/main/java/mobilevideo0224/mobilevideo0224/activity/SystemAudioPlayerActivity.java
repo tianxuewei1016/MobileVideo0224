@@ -68,6 +68,8 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
 
     private final static int PROGRESS = 0;
 
+    private boolean notification;
+
     private Handler handler = new Handler() {
         @Override
         public void handleMessage(Message msg) {
@@ -77,7 +79,6 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
                     try {
                         int currentPosition = service.getCurrentPosition();
                         seekbarAudio.setProgress(currentPosition);
-
                         //设置更新时间
                         tvTime.setText(utils.stringForTime(currentPosition) + "/" + utils.stringForTime(service.getDuration()));
                     } catch (RemoteException e) {
@@ -104,7 +105,12 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             service = IMusicPlayService.Stub.asInterface(iBinder);
             if (service != null) {
                 try {
-                    service.openAudio(position);//打开播放第0个音频
+                    if (notification) {
+                        //什么不用做
+                        setViewData();
+                    } else {
+                        service.openAudio(position);//打开播放第0个音频
+                    }
                 } catch (RemoteException e) {
                     e.printStackTrace();
                 }
@@ -142,11 +148,11 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         seekbarAudio.setOnSeekBarChangeListener(new MyOnSeekBarChangeListener());
     }
 
-    class MyOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener{
+    class MyOnSeekBarChangeListener implements SeekBar.OnSeekBarChangeListener {
 
         @Override
         public void onProgressChanged(SeekBar seekBar, int progress, boolean fromUser) {
-            if(fromUser) {
+            if (fromUser) {
                 try {
                     service.seekTo(progress);
                 } catch (RemoteException e) {
@@ -198,7 +204,10 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     }
 
     private void getData() {
-        position = getIntent().getIntExtra("position", 0);
+        notification = getIntent().getBooleanExtra("notification", false);
+        if (!notification) {
+            position = getIntent().getIntExtra("position", 0);
+        }
     }
 
     private void startAndBindService() {
@@ -246,7 +255,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             unbindService(conon);
             conon = null;
         }
-        if(receiver != null) {
+        if (receiver != null) {
             unregisterReceiver(receiver);
             receiver = null;
         }
