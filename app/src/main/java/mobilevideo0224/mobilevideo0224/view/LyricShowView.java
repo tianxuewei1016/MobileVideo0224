@@ -28,6 +28,7 @@ public class LyricShowView extends TextView {
      */
     private int index;
     private float textHeight = 20;
+    private int currentPosition;
 
     public LyricShowView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -60,7 +61,7 @@ public class LyricShowView extends TextView {
         Lyric lyric = new Lyric();
         for (int i = 0; i < 1000; i++) {
             //不同歌词
-            lyric.setContent("aaaaaaa_" + i);
+            lyric.setContent("aaaaaaaaaaaaa_" + i);
             lyric.setSleepTime(2000);
             lyric.setTimePoint(2000 * i);
             //添加到集合
@@ -78,38 +79,60 @@ public class LyricShowView extends TextView {
     @Override
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
-        if(lyrics!=null&&lyrics.size()>0) {
+        if (lyrics != null && lyrics.size() > 0) {
             //有歌词
             //当前-中心的那一句
             String currentContent = lyrics.get(index).getContent();
             canvas.drawText(currentContent, width / 2, height / 2, paintGreen);
             //得到中间句的坐标
-            float tempY = height/2;
+            float tempY = height / 2;
             //绘制前面部分
             for (int i = index - 1; i >= 0; i--) {
                 //得到前一部分的歌词内容
                 String preContent = lyrics.get(i).getContent();
                 tempY = tempY - textHeight;
-                if(tempY<0) {
+                if (tempY < 0) {
                     break;
                 }
                 canvas.drawText(preContent, width / 2, tempY, paintWhite);
             }
-            tempY = height/2;
+            tempY = height / 2;
             //绘制后面的部分
-            for (int i = index +1;i < lyrics.size();i++){
+            for (int i = index + 1; i < lyrics.size(); i++) {
                 //得到后一部分的内容
                 String nextContent = lyrics.get(i).getContent();
                 tempY = tempY + textHeight;
-                if(tempY > height) {
+                if (tempY > height) {
                     break;
                 }
                 //绘制内容
-                canvas.drawText(nextContent,width / 2, tempY, paintWhite);
+                canvas.drawText(nextContent, width / 2, tempY, paintWhite);
             }
 
-        }else{
+        } else {
             canvas.drawText("没有找到歌词..", width / 2, height / 2, paintGreen);
         }
+    }
+
+    /**
+     * 根据播放的位置查找或者计算出当前该高亮显示的是哪一句
+     * 并且得到这一句对应的相关信息
+     *
+     * @param currentPosition
+     */
+    public void setNextShowLyric(int currentPosition) {
+        this.currentPosition = currentPosition;
+        if (lyrics == null || lyrics.size() == 0)
+            return;
+        for (int i = 1; i < lyrics.size(); i++) {
+            if (currentPosition < lyrics.get(i).getTimePoint()) {
+                int tempIndex = i - 1;
+                if (currentPosition >= lyrics.get(tempIndex).getTimePoint()) {
+                    //中间高亮显示哪一句
+                    index = tempIndex;
+                }
+            }
+        }
+        invalidate();
     }
 }

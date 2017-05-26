@@ -33,6 +33,7 @@ import mobilevideo0224.mobilevideo0224.R;
 import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 import mobilevideo0224.mobilevideo0224.service.MusicPlayService;
 import mobilevideo0224.mobilevideo0224.utils.Utils;
+import mobilevideo0224.mobilevideo0224.view.LyricShowView;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity {
 
@@ -60,6 +61,8 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     Button btnLyric;
     @InjectView(R.id.ll_bottom)
     LinearLayout llBottom;
+    @InjectView(R.id.lyric_show_view)
+    LyricShowView lyricShowView;
     /**
      * 这个就是IMusicPlayService.Stub的实例
      */
@@ -72,6 +75,10 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     private Utils utils;
 
     private final static int PROGRESS = 0;
+    /**
+     * 显示歌词
+     */
+    private static final int SHOW_LYRIC = 1;
 
     private boolean notification;
 
@@ -80,6 +87,17 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         public void handleMessage(Message msg) {
             super.handleMessage(msg);
             switch (msg.what) {
+                case SHOW_LYRIC:
+                    try {
+                        int currentPosition = service.getCurrentPosition();
+                        //调用歌词显示控件的setNextShowLyric
+                        lyricShowView.setNextShowLyric(currentPosition);
+                    } catch (RemoteException e) {
+                        e.printStackTrace();
+                    }
+                    removeMessages(SHOW_LYRIC);
+                    sendEmptyMessage(SHOW_LYRIC);
+                    break;
                 case PROGRESS:
                     try {
                         int currentPosition = service.getCurrentPosition();
@@ -200,6 +218,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             setViewData(null);
         }
     }
+
     @Subscribe(threadMode = ThreadMode.MAIN)
     public void setViewData(MediaItem mediaItem) {
         try {
@@ -211,6 +230,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         }
         //发送消息更新进度
         handler.sendEmptyMessage(PROGRESS);
+        handler.sendEmptyMessage(SHOW_LYRIC);
     }
 
     private void getData() {
@@ -317,6 +337,9 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         }
         //2.取消注册EventBus
         EventBus.getDefault().unregister(this);
+        if(handler!=null) {
+            handler.removeCallbacksAndMessages(null);
+        }
         super.onDestroy();
     }
 }
