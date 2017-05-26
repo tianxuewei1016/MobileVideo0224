@@ -25,13 +25,18 @@ import org.greenrobot.eventbus.EventBus;
 import org.greenrobot.eventbus.Subscribe;
 import org.greenrobot.eventbus.ThreadMode;
 
+import java.io.File;
+import java.util.ArrayList;
+
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.IMusicPlayService;
 import mobilevideo0224.mobilevideo0224.R;
+import mobilevideo0224.mobilevideo0224.base.Lyric;
 import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 import mobilevideo0224.mobilevideo0224.service.MusicPlayService;
+import mobilevideo0224.mobilevideo0224.utils.LyricsUtils;
 import mobilevideo0224.mobilevideo0224.utils.Utils;
 import mobilevideo0224.mobilevideo0224.view.LyricShowView;
 
@@ -225,6 +230,27 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             setButtonImage();
             int duration = service.getDuration();
             seekbarAudio.setMax(duration);
+            
+            //解析歌词
+            //1.得到歌词所在路径
+            String audioPath = service.getAudioPath();
+            String lyricPath = audioPath.substring(0, audioPath.lastIndexOf("."));
+            File file = new File(lyricPath+".lrc");
+            if(!file.exists()) {
+                file = new File(lyricPath + ".txt");
+            }
+            LyricsUtils lyricsUtils = new LyricsUtils();
+            //解析歌词
+            lyricsUtils.readFile(file);
+            ArrayList<Lyric> lyrics = lyricsUtils.getLyrics();
+            lyricShowView.setLyrics(lyrics);
+
+            if(lyricsUtils.isLyric()) {
+                //歌词同步
+                handler.sendEmptyMessage(SHOW_LYRIC);
+            }
+
+
         } catch (RemoteException e) {
             e.printStackTrace();
         }
