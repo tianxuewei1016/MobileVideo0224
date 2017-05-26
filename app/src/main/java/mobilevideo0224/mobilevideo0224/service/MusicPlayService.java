@@ -203,6 +203,7 @@ public class MusicPlayService extends Service {
 
     /**
      * 发送广播
+     *
      * @param action
      */
     private void notifyChange(String action) {
@@ -296,6 +297,7 @@ public class MusicPlayService extends Service {
      * +
      */
     private void seekTo(int position) {
+        mediaPlayer.seekTo(position);
     }
 
     /**
