@@ -3,6 +3,7 @@ package mobilevideo0224.mobilevideo0224.activity;
 
 import android.os.Bundle;
 import android.support.v7.app.AppCompatActivity;
+import android.text.TextUtils;
 import android.util.Log;
 import android.view.View;
 import android.widget.EditText;
@@ -11,6 +12,7 @@ import android.widget.ListView;
 import android.widget.TextView;
 import android.widget.Toast;
 
+import com.google.gson.Gson;
 import com.iflytek.cloud.ErrorCode;
 import com.iflytek.cloud.InitListener;
 import com.iflytek.cloud.RecognizerResult;
@@ -21,14 +23,23 @@ import com.iflytek.cloud.ui.RecognizerDialogListener;
 
 import org.json.JSONException;
 import org.json.JSONObject;
+import org.xutils.common.Callback;
+import org.xutils.http.RequestParams;
+import org.xutils.x;
 
+import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.util.HashMap;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
 import butterknife.OnClick;
 import mobilevideo0224.mobilevideo0224.R;
+import mobilevideo0224.mobilevideo0224.adapter.SearchAdapter;
+import mobilevideo0224.mobilevideo0224.bean.SearchBean;
+import mobilevideo0224.mobilevideo0224.utils.Constant;
 import mobilevideo0224.mobilevideo0224.utils.JsonParser;
 
 public class SearchActivity extends AppCompatActivity {
@@ -41,8 +52,13 @@ public class SearchActivity extends AppCompatActivity {
     TextView tvGo;
     @InjectView(R.id.lv)
     ListView lv;
+
+    private String url;
     // 用HashMap存储听写结果
     private HashMap<String, String> mIatResults = new LinkedHashMap<String, String>();
+    private List<SearchBean.ItemsBean> datas;
+    private SearchAdapter adapter;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -58,9 +74,66 @@ public class SearchActivity extends AppCompatActivity {
                 showVoiceDialog();
                 break;
             case R.id.tv_go:
+                Toast.makeText(SearchActivity.this, "搜索", Toast.LENGTH_SHORT).show();
+                toSearch();
                 break;
         }
     }
+
+    private void toSearch() {
+        //1.得到输入宽的内容
+        String trim = etSousuo.getText().toString().trim();
+        //中文搜索的
+        try {
+            trim = URLEncoder.encode(trim,"UTF-8");
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        if(!TextUtils.isEmpty(trim)) {
+            //2.拼接
+            url = Constant.NET_SEARCH_URL + trim;
+            //3.联网请求
+            getDataFromNet(url);
+        }else {
+            Toast.makeText(SearchActivity.this, "请输入您要搜索的内容", Toast.LENGTH_SHORT).show();
+        }
+    }
+
+    private void getDataFromNet(String url) {
+        RequestParams request = new RequestParams(url);
+        x.http().get(request, new Callback.CommonCallback<String>() {
+            @Override
+            public void onSuccess(String result) {
+                Log.e("TAG","请求成功-result=="+result);
+                processData(result);
+            }
+
+            @Override
+            public void onError(Throwable ex, boolean isOnCallback) {
+                Log.e("TAG","请求失败=="+ex.getMessage());
+            }
+
+            @Override
+            public void onCancelled(CancelledException cex) {
+
+            }
+
+            @Override
+            public void onFinished() {
+
+            }
+        });
+    }
+
+    private void processData(String json) {
+        SearchBean searchBean = new Gson().fromJson(json,SearchBean.class);
+        datas = searchBean.getItems();
+        if(datas!=null&&datas.size()>0) {
+            adapter = new SearchAdapter(this,datas);
+            lv.setAdapter(adapter);
+        }
+    }
+
 
     private void showVoiceDialog() {
         //1.创建RecognizerDialog对象
@@ -120,8 +193,10 @@ public class SearchActivity extends AppCompatActivity {
         for (String key : mIatResults.keySet()) {
             resultBuffer.append(mIatResults.get(key));
         }
+        String stri = resultBuffer.toString();
+        stri = stri.replace("。", "");
 
-        etSousuo.setText(resultBuffer.toString());
+        etSousuo.setText(stri);
         etSousuo.setSelection(etSousuo.length());
     }
 }
