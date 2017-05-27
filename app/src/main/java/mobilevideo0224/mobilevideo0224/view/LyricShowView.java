@@ -28,7 +28,9 @@ public class LyricShowView extends TextView {
      */
     private int index;
     private float textHeight = 20;
-    private int currentPosition;
+    private float currentPosition;
+    private long timePoint;
+    private long sleepTime;
 
     public LyricShowView(Context context, AttributeSet attrs) {
         super(context, attrs);
@@ -80,6 +82,15 @@ public class LyricShowView extends TextView {
     protected void onDraw(Canvas canvas) {
         super.onDraw(canvas);
         if (lyrics != null && lyrics.size() > 0) {
+            if(index != lyrics.size()-1) {
+                float push = 0;
+                if(sleepTime == 0) {
+                    push = 0;
+                }else{
+                    push = ((currentPosition - timePoint) / sleepTime) * textHeight;
+                }
+                canvas.translate(0, -push);
+            }
             //有歌词
             //当前-中心的那一句
             String currentContent = lyrics.get(index).getContent();
@@ -130,7 +141,13 @@ public class LyricShowView extends TextView {
                 if (currentPosition >= lyrics.get(tempIndex).getTimePoint()) {
                     //中间高亮显示哪一句
                     index = tempIndex;
+                    //时间戳
+                     timePoint = lyrics.get(index).getTimePoint();
+                    //高亮时间
+                     sleepTime = lyrics.get(index).getSleepTime();
                 }
+            }else{
+                index = i;
             }
         }
         invalidate();

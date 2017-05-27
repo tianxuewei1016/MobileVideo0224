@@ -116,7 +116,7 @@ public class LyricsUtils {
                 pos2 = content.indexOf("]");//9,如果没有就返回-1
 
                 if (pos1 == 0 && pos2 != -1) {//至少还有一句
-                    timeStr = line.substring(pos1 + 1, pos2);
+                    timeStr = content.substring(pos1 + 1, pos2);
                     //解析第1句
                     timeLongs[i] = stringToLong(timeStr);//转换成long的毫秒类型
 
