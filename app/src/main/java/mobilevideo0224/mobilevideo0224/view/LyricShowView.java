@@ -10,6 +10,7 @@ import android.widget.TextView;
 import java.util.ArrayList;
 
 import mobilevideo0224.mobilevideo0224.base.Lyric;
+import mobilevideo0224.mobilevideo0224.utils.DensityUtil;
 
 /**
  * 作者：田学伟 on 2017/5/26 13:43
@@ -18,6 +19,7 @@ import mobilevideo0224.mobilevideo0224.base.Lyric;
  */
 
 public class LyricShowView extends TextView {
+    private final Context context;
     private Paint paintGreen;
     private Paint paintWhite;
     private int width;
@@ -34,6 +36,7 @@ public class LyricShowView extends TextView {
 
     public LyricShowView(Context context, AttributeSet attrs) {
         super(context, attrs);
+        this.context = context;
         initView();
     }
 
@@ -45,17 +48,18 @@ public class LyricShowView extends TextView {
     }
 
     private void initView() {
+        textHeight = DensityUtil.dip2px(context,20);
         paintGreen = new Paint();
         paintGreen.setColor(Color.GREEN);
         paintGreen.setAntiAlias(true);
-        paintGreen.setTextSize(16);
+        paintGreen.setTextSize(DensityUtil.dip2px(context,16));
         //设置居中
         paintGreen.setTextAlign(Paint.Align.CENTER);
 
         paintWhite = new Paint();
         paintWhite.setColor(Color.WHITE);
         paintWhite.setAntiAlias(true);
-        paintWhite.setTextSize(16);
+        paintWhite.setTextSize(DensityUtil.dip2px(context,16));
         //设置居中
         paintWhite.setTextAlign(Paint.Align.CENTER);
 //        //准备歌词

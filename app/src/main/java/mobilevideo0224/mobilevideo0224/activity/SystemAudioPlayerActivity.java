@@ -7,6 +7,7 @@ import android.content.Intent;
 import android.content.IntentFilter;
 import android.content.ServiceConnection;
 import android.graphics.drawable.AnimationDrawable;
+import android.media.audiofx.Visualizer;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.IBinder;
@@ -38,6 +39,7 @@ import mobilevideo0224.mobilevideo0224.bean.MediaItem;
 import mobilevideo0224.mobilevideo0224.service.MusicPlayService;
 import mobilevideo0224.mobilevideo0224.utils.LyricsUtils;
 import mobilevideo0224.mobilevideo0224.utils.Utils;
+import mobilevideo0224.mobilevideo0224.view.BaseVisualizerView;
 import mobilevideo0224.mobilevideo0224.view.LyricShowView;
 
 public class SystemAudioPlayerActivity extends AppCompatActivity {
@@ -68,6 +70,10 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
     LinearLayout llBottom;
     @InjectView(R.id.lyric_show_view)
     LyricShowView lyricShowView;
+    @InjectView(R.id.visualizerview)
+    BaseVisualizerView visualizerview;
+
+    private Visualizer mVisualizer;
     /**
      * 这个就是IMusicPlayService.Stub的实例
      */
@@ -230,13 +236,13 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             setButtonImage();
             int duration = service.getDuration();
             seekbarAudio.setMax(duration);
-            
+
             //解析歌词
             //1.得到歌词所在路径
             String audioPath = service.getAudioPath();
             String lyricPath = audioPath.substring(0, audioPath.lastIndexOf("."));
-            File file = new File(lyricPath+".lrc");
-            if(!file.exists()) {
+            File file = new File(lyricPath + ".lrc");
+            if (!file.exists()) {
                 file = new File(lyricPath + ".txt");
             }
             LyricsUtils lyricsUtils = new LyricsUtils();
@@ -245,7 +251,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
             ArrayList<Lyric> lyrics = lyricsUtils.getLyrics();
             lyricShowView.setLyrics(lyrics);
 
-            if(lyricsUtils.isLyric()) {
+            if (lyricsUtils.isLyric()) {
                 //歌词同步
                 handler.sendEmptyMessage(SHOW_LYRIC);
             }
@@ -256,13 +262,42 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         }
         //发送消息更新进度
         handler.sendEmptyMessage(PROGRESS);
-        handler.sendEmptyMessage(SHOW_LYRIC);
+        //显示音乐频谱
+        setupVisualizerFxAndUi();
+    }
+
+    /**
+     * 生成一个VisualizerView对象，使音频频谱的波段能够反映到 VisualizerView上
+     */
+    private void setupVisualizerFxAndUi() {
+
+        int audioSessionid = 0;
+        try {
+            audioSessionid = service.getAudioSessionId();
+        } catch (RemoteException e) {
+            e.printStackTrace();
+        }
+        System.out.println("audioSessionid==" + audioSessionid);
+        mVisualizer = new Visualizer(audioSessionid);
+        // 参数内必须是2的位数
+        mVisualizer.setCaptureSize(Visualizer.getCaptureSizeRange()[1]);
+        // 设置允许波形表示，并且捕获它
+        visualizerview.setVisualizer(mVisualizer);
+        mVisualizer.setEnabled(true);
     }
 
     private void getData() {
         notification = getIntent().getBooleanExtra("notification", false);
         if (!notification) {
             position = getIntent().getIntExtra("position", 0);
+        }
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
+        if(isFinishing()) {
+            mVisualizer.release();
         }
     }
 
@@ -363,7 +398,7 @@ public class SystemAudioPlayerActivity extends AppCompatActivity {
         }
         //2.取消注册EventBus
         EventBus.getDefault().unregister(this);
-        if(handler!=null) {
+        if (handler != null) {
             handler.removeCallbacksAndMessages(null);
         }
         super.onDestroy();

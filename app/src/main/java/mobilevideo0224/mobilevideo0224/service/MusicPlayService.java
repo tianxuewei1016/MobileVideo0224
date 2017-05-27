@@ -105,6 +105,11 @@ public class MusicPlayService extends Service {
         public void setPlaymode(int playmode) throws RemoteException {
             service.setPlaymode(playmode);
         }
+
+        @Override
+        public int getAudioSessionId() throws RemoteException {
+            return mediaPlayer.getAudioSessionId();
+        }
     };
 
     public MusicPlayService() {
@@ -247,9 +252,9 @@ public class MusicPlayService extends Service {
         public void onPrepared(MediaPlayer mp) {
             //发广播
 //            notifyChange(OPEN_COMPLETE);
+            start();
             //3.发消息
             EventBus.getDefault().post(mediaItem);
-            start();
         }
     }
 
